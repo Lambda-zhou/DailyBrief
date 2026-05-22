@@ -102,10 +102,26 @@
 5. (Optional) On the same Variables tab, add:
    - `LLM_MODEL` — override the backend's default model (otherwise uses the default listed in [`.env.example`](.env.example))
    - `REPORT_LOCALE` — `zh` (default) or `en` — switches sources + UI + LLM prompts as a set
-   - `REPORT_TZ` — IANA timezone name (default in CI is UTC); e.g. `Asia/Shanghai` / `America/Los_Angeles` — affects the date label
+   - `REPORT_TZ` — IANA timezone name (default UTC); e.g. `Asia/Shanghai` / `America/Los_Angeles`. **Drives both the trigger time and the date label.**
+   - `REPORT_HOUR` — hour(s) to fire in `REPORT_TZ`, default `8` (08:00). Comma-separated for multiple, e.g. `8,18` = 8 AM and 6 PM
+   - `REPORT_DAYS` — day-of-week filter (cron-style, `0`=Sunday ... `6`=Saturday), default `*` (every day). E.g. `1-5` = weekdays; `1,3,5` = Mon/Wed/Fri
 6. **Actions tab → "Daily Brief" workflow → Run workflow** to trigger manually for the first time
 
-Once the workflow turns green, your report lives at `https://<your-username>.github.io/<repo-name>/`, refreshed daily at 08:00 UTC. Change the schedule by editing the cron line at [`.github/workflows/daily.yml:24`](.github/workflows/daily.yml#L24).
+Once the workflow turns green, your report lives at `https://<your-username>.github.io/<repo-name>/`. After that, **it refreshes daily at 08:00 in `REPORT_TZ`** (or 08:00 UTC if `REPORT_TZ` is unset).
+
+> ⏰ **How the schedule works**: GitHub Actions cron is UTC-only, so the workflow runs **hourly** and uses a `gate` job to check if the current hour in `REPORT_TZ` matches `REPORT_HOUR` / `REPORT_DAYS`. If so, the build job proceeds; otherwise it exits in seconds. This lets the schedule track any local timezone precisely, and **handles DST transitions automatically** (via the IANA tz database).
+
+**Common schedule recipes:**
+
+| You want | `REPORT_HOUR` | `REPORT_DAYS` |
+|---|---|---|
+| Every day at 08:00 (default) | unset or `8` | unset or `*` |
+| Twice daily (8 AM + 6 PM) | `8,18` | `*` |
+| Weekdays at 09:00 | `9` | `1-5` |
+| Mon/Wed/Fri at 7 AM + 9 PM | `7,21` | `1,3,5` |
+| Every 6 hours | `0,6,12,18` | `*` |
+
+If you just want the default (08:00 local daily), **set only `REPORT_TZ`** (e.g. `Asia/Shanghai`) and leave the rest at defaults.
 
 **💸 Cost summary**: GitHub Actions on public repos is free. Pages on public repos is free. The only thing you pay for is LLM API calls — DeepSeek runs under $1/month, Anthropic Sonnet under $2.
 

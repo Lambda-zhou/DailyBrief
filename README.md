@@ -102,10 +102,26 @@
 5. （可选）同页 Variables 再加：
    - `LLM_MODEL` —— 覆盖该 backend 的默认模型（不填用 [`.env.example`](.env.example) 里列的默认）
    - `REPORT_LOCALE` —— `zh`（默认）或 `en`，控制数据源 + UI + prompt 全套切英文
-   - `REPORT_TZ` —— IANA 时区名（CI 容器默认 UTC），例 `Asia/Shanghai` / `America/Los_Angeles`，影响日期标签
+   - `REPORT_TZ` —— IANA 时区名（默认 UTC），例 `Asia/Shanghai` / `America/Los_Angeles`。**同时影响触发时间和日期标签**
+   - `REPORT_HOUR` —— 触发的小时（基于 `REPORT_TZ`），默认 `8`（早 8 点）。逗号分隔可多次触发，如 `8,18` = 早 8 + 晚 6
+   - `REPORT_DAYS` —— 触发的星期（cron 风格，`0`=周日 ... `6`=周六），默认 `*`（每天）。例 `1-5` = 工作日；`1,3,5` = 周一三五
 6. **Actions 标签 → 选 "Daily Brief" workflow → Run workflow** 手动触发一次
 
-跑完后报告在 `https://<你的用户名>.github.io/<repo-名字>/`，之后每天 08:00 UTC 自动更新。改时间编辑 [`.github/workflows/daily.yml:24`](.github/workflows/daily.yml#L24) 这一行的 cron。
+跑完后报告在 `https://<你的用户名>.github.io/<repo-名字>/`。之后**默认每天 `REPORT_TZ` 时区的 08:00 自动更新**（不设 `REPORT_TZ` 就是 UTC 08:00）。
+
+> ⏰ **触发机制**：GitHub Actions 的 cron 只接受 UTC，所以工作流 cron 设置为**每小时跑一次**，里面有一个 `gate` 任务用 `REPORT_TZ` 把当前小时和 `REPORT_HOUR/REPORT_DAYS` 对照——匹配才往下跑 build，否则秒退。这样不论你在哪个时区都能精准命中本地时间，**夏令时也自动跟着切换**（IANA 时区数据库内置）。
+
+**常用 schedule 配方：**
+
+| 想要 | `REPORT_HOUR` | `REPORT_DAYS` |
+|---|---|---|
+| 每天 08:00（默认） | 不填或 `8` | 不填或 `*` |
+| 每天早晚两次（8 + 18 点） | `8,18` | `*` |
+| 工作日 09:00 | `9` | `1-5` |
+| 周一/三/五 早 7 晚 9 两次 | `7,21` | `1,3,5` |
+| 每 6 小时一次 | `0,6,12,18` | `*` |
+
+只想要默认每天 08:00 本地时间，**只填 `REPORT_TZ` 一个变量就够了**（如 `Asia/Shanghai`），其他全部留空。
 
 **💸 成本估算**：GitHub Actions 公开 repo 完全免费。Pages 公开 repo 也免费。唯一花钱的就是 LLM API 调用——DeepSeek 月成本不到 $1，Anthropic Sonnet < $2。
 
