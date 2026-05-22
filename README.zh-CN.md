@@ -1,6 +1,6 @@
 # daily-brief · 10 分钟拥有你自己的 AI 每日简报
 
-[English](README.md) · **[中文](README.zh-CN.md)**
+[English](./) · **[中文](README.zh-CN.md)**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node 20+](https://img.shields.io/badge/node-20%2B-brightgreen.svg)](https://nodejs.org/)
