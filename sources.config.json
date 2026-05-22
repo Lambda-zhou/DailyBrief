@@ -27,14 +27,15 @@
   {
     "id": "linuxdo",
     "name": "LinuxDo",
-    "type": "api",
-    "url": "https://linux.do/top.json?period=daily",
+    "type": "rss",
+    "url": "https://linux.do/top.rss?period=daily",
     "category": "tech",
     "subcategory": "cn-community",
     "enabled": true,
     "locales": [
       "zh"
-    ]
+    ],
+    "notes": "Discourse RSS feed; fetcher falls back to /latest.rss if /top.rss fails"
   },
   {
     "id": "juejin",
